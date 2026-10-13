@@ -321,7 +321,7 @@ function parseTaskExcelFile(file) {
             try {
                 const workbook = XLSX.read(event.target.result, {
                     type: "array",
-                    cellDates: true
+                    cellDates: false
                 });
 
                 const firstSheetName = workbook.SheetNames[0];
