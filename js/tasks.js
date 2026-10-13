@@ -9,6 +9,17 @@ let taskflixTasks = [];
 let editingTaskId = null;
 let taskflixTasksLoading = false;
 
+/* Keep tasks accessible to dashboard and Excel modules. */
+function syncTaskflixTasksGlobal() {
+window.taskflixTasks = taskflixTasks;
+}
+
+syncTaskflixTasksGlobal();
+
+/* ==========================================
+VALIDATION
+========================================== */
+
 function validateTaskInput(task) {
 const description = String(task.description ?? "").trim();
 
@@ -29,8 +40,6 @@ if (!startDate || !startTime || !endDate || !endTime) {
     return "Please select all start and end date/time fields.";
 }
 
-// HTML date inputs return YYYY-MM-DD.
-// HTML time inputs normally return HH:MM.
 const start = new Date(`${startDate}T${startTime}`);
 const end = new Date(`${endDate}T${endTime}`);
 
@@ -48,6 +57,10 @@ if (end.getTime() <= start.getTime()) {
 return null;
 
 }
+
+/* ==========================================
+MESSAGES AND DATE FORMATTING
+========================================== */
 
 function showTaskMessage(message, type = "info") {
 const element = document.getElementById("task-message");
@@ -77,15 +90,26 @@ return new Intl.DateTimeFormat(undefined, {
 
 }
 
+/* ==========================================
+TASK UPDATE EVENTS
+========================================== */
+
 function notifyTasksUpdated() {
+syncTaskflixTasksGlobal();
+
 window.dispatchEvent(
-new CustomEvent("taskflix:tasks-updated", {
-detail: {
-tasks: taskflixTasks.map((task) => ({ ...task }))
-}
-})
+    new CustomEvent("taskflix:tasks-updated", {
+        detail: {
+            tasks: taskflixTasks.map((task) => ({ ...task }))
+        }
+    })
 );
+
 }
+
+/* ==========================================
+TASK ELEMENT CREATION
+========================================== */
 
 function createTaskElement(task) {
 const item = document.createElement("article");
@@ -164,7 +188,13 @@ return item;
 
 }
 
+/* ==========================================
+RENDER TASK LIST
+========================================== */
+
 function renderTaskList() {
+syncTaskflixTasksGlobal();
+
 const list = document.getElementById("task-list");
 
 if (!list) return;
@@ -197,6 +227,10 @@ notifyTasksUpdated();
 
 }
 
+/* ==========================================
+LOAD TASKS FROM CLOUD
+========================================== */
+
 async function loadCloudTasks() {
 taskflixTasksLoading = true;
 renderTaskList();
@@ -209,20 +243,31 @@ try {
         completed: Boolean(task.completed)
     }));
 
+    syncTaskflixTasksGlobal();
+
     showTaskMessage("Your cloud tasks are up to date.", "success");
+
+    return true;
 } catch (error) {
     taskflixTasks = [];
+    syncTaskflixTasksGlobal();
 
     showTaskMessage(
         error.message || "Could not load tasks from cloud storage.",
         "error"
     );
+
+    return false;
 } finally {
     taskflixTasksLoading = false;
     renderTaskList();
 }
 
 }
+
+/* ==========================================
+COMPLETE OR REOPEN A TASK
+========================================== */
 
 async function toggleTaskCompletion(taskId) {
 const task = taskflixTasks.find((item) => item.id === taskId);
@@ -233,6 +278,8 @@ const previousValue = task.completed;
 const newValue = !previousValue;
 
 task.completed = newValue;
+
+syncTaskflixTasksGlobal();
 renderTaskList();
 
 try {
@@ -244,8 +291,12 @@ try {
             : "Task marked as pending.",
         "success"
     );
+
+    notifyTasksUpdated();
 } catch (error) {
     task.completed = previousValue;
+
+    syncTaskflixTasksGlobal();
     renderTaskList();
 
     showTaskMessage(
@@ -255,6 +306,10 @@ try {
 }
 
 }
+
+/* ==========================================
+EDIT TASK
+========================================== */
 
 function editTask(taskId) {
 const task = taskflixTasks.find((item) => item.id === taskId);
@@ -279,6 +334,10 @@ document.getElementById("task-description").focus();
 
 }
 
+/* ==========================================
+DELETE TASK
+========================================== */
+
 async function deleteTask(taskId) {
 const task = taskflixTasks.find((item) => item.id === taskId);
 
@@ -295,11 +354,15 @@ try {
         (item) => item.id !== taskId
     );
 
+    syncTaskflixTasksGlobal();
+
     if (editingTaskId === taskId) {
         resetTaskForm();
     }
 
     renderTaskList();
+    notifyTasksUpdated();
+
     showTaskMessage("Task deleted.", "success");
 } catch (error) {
     showTaskMessage(
@@ -309,6 +372,10 @@ try {
 }
 
 }
+
+/* ==========================================
+RESET TASK FORM
+========================================== */
 
 function resetTaskForm() {
 const form = document.getElementById("task-form");
@@ -326,6 +393,10 @@ if (saveButton) {
 }
 
 }
+
+/* ==========================================
+CREATE OR UPDATE TASK
+========================================== */
 
 async function saveTask(taskValues) {
 const validationMessage = validateTaskInput(taskValues);
@@ -360,20 +431,30 @@ try {
 
         taskflixTasks = taskflixTasks.map((task) =>
             task.id === editingTaskId
-                ? { ...task, ...savedTask }
+                ? {
+                    ...task,
+                    ...savedTask,
+                    completed: Boolean(savedTask.completed)
+                }
                 : task
         );
 
         showTaskMessage("Task updated in cloud storage.", "success");
     } else {
         savedTask = await createTaskflixCloudTask(normalizedTask);
-        taskflixTasks.push(savedTask);
+
+        taskflixTasks.push({
+            ...savedTask,
+            completed: Boolean(savedTask.completed)
+        });
 
         showTaskMessage("Task saved.", "success");
     }
 
+    syncTaskflixTasksGlobal();
     resetTaskForm();
     renderTaskList();
+    notifyTasksUpdated();
 } catch (error) {
     showTaskMessage(
         error.message || "Could not save the task.",
@@ -386,6 +467,10 @@ try {
 }
 
 }
+
+/* ==========================================
+INITIALIZATION AND AUTH STATE
+========================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
 const form = document.getElementById("task-form");
@@ -416,6 +501,8 @@ window.addEventListener("taskflix:auth-state", (event) => {
         loadCloudTasks();
     } else {
         taskflixTasks = [];
+        syncTaskflixTasksGlobal();
+
         taskflixTasksLoading = false;
         resetTaskForm();
         renderTaskList();
