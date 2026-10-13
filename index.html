@@ -176,10 +176,66 @@
                 </div>
             </section>
 
-            <section aria-labelledby="excel-heading">
-                <h3 id="excel-heading">Excel Import and Export</h3>
-                <p>Bulk import and EOD export will be added in a later step.</p>
-            </section>
+            <section class="tasks-section excel-section" aria-labelledby="excel-heading">
+    <div class="section-heading">
+        <h2 id="excel-heading">Excel Import &amp; Export</h2>
+        <p>Import multiple tasks from an Excel file or download your End-of-Day report.</p>
+    </div><div class="excel-tool-card">
+    <h3>Bulk Import Tasks</h3>
+    <p>
+        Upload an Excel workbook containing these five columns:
+        Description, Start Date, Start Time, End Date, and End Time.
+    </p>
+
+    <div class="excel-format-note">
+        <strong>Required format</strong>
+        <p>
+            Dates: YYYY-MM-DD (for example, 2026-10-14)<br>
+            Times: 24-hour format (for example, 14:30) or 12-hour format (for example, 02:30 PM)
+        </p>
+    </div>
+
+    <form id="excel-import-form">
+        <div class="form-group">
+            <label for="excel-file">Choose Excel file</label>
+            <input
+                type="file"
+                id="excel-file"
+                name="excelFile"
+                accept=".xlsx,.xls"
+                required
+            >
+        </div>
+
+        <button type="submit" id="excel-import-button" class="btn btn-primary">
+            Import Tasks
+        </button>
+    </form>
+
+    <div id="excel-import-message" class="form-message" role="status" aria-live="polite"></div>
+
+    <div id="excel-import-errors" class="excel-import-errors" role="alert" hidden></div>
+</div>
+
+<div class="excel-tool-card">
+    <h3>End-of-Day Report</h3>
+    <p>
+        Download your tasks with their current completion status in an Excel workbook.
+    </p>
+
+    <p class="excel-format-note">
+        The report contains exactly two columns:
+        <strong>Description</strong> and <strong>Task Completion Status</strong>.
+    </p>
+
+    <button type="button" id="excel-export-button" class="btn btn-secondary">
+        Download EOD Report
+    </button>
+
+    <div id="excel-export-message" class="form-message" role="status" aria-live="polite"></div>
+</div>
+
+</section>
         </section>
     </main>
 
