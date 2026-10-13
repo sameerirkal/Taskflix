@@ -1,302 +1,238 @@
 "use strict";
 
 /* ==========================================
-TASKFLIX — AUTHENTICATION MODULE
-Supabase sign-in, sign-up and sign-out
+TASKFLIX — AUTHENTICATION
+Supabase login, signup and logout
 ========================================== */
 
-/*
+let taskflixAuthClient = null;
 
-* SECURITY:
-* Configure your Supabase project URL and publishable
-* (anon) key before enabling authentication.
-* 
-* Never put a Supabase service_role key or any other
-* privileged secret in browser JavaScript.
-  */
+function showAuthMessage(message, type = "info") {
+const element = document.getElementById("auth-message");
 
-const TASKFLIX_SUPABASE_URL = "";
-const TASKFLIX_SUPABASE_PUBLISHABLE_KEY = "";
+if (!element) return;
 
-let taskflixSupabase = null;
+element.textContent = message;
+element.className = "status-message";
 
-/**
+if (["success", "warning", "error"].includes(type)) {
+    element.classList.add(`status-${type}`);
+}
 
-* Initialize Supabase using the library loaded by the HTML page.
-  */
-  function initializeSupabaseAuth() {
-  if (
-  typeof window.supabase === "undefined" ||
-  typeof window.supabase.createClient !== "function"
-  ) {
-  console.error("TASKFLIX: Supabase library is not available.");
-  return false;
-  }
-  
-  if (
-  !TASKFLIX_SUPABASE_URL ||
-  !TASKFLIX_SUPABASE_PUBLISHABLE_KEY
-  ) {
-  console.warn(
-  "TASKFLIX: Supabase configuration is not set up yet."
-  );
-  return false;
-  }
-  
-  try {
-  taskflixSupabase = window.supabase.createClient(
-  TASKFLIX_SUPABASE_URL,
-  TASKFLIX_SUPABASE_PUBLISHABLE_KEY
-  );
-  
-   return true;
-  
-  } catch (error) {
-  console.error("TASKFLIX: Supabase initialization failed.");
-  return false;
-  }
-  }
+}
 
-/**
+function showTaskflixAuthState(session) {
+const authSection = document.getElementById("auth-section");
+const taskSection = document.getElementById("task-section");
 
-* Display an authentication message.
-  */
-  function showAuthMessage(message, type = "info") {
-  const messageElement = document.getElementById("auth-message");
-  
-  if (!messageElement) {
-  return;
-  }
-  
-  messageElement.textContent = message;
-  messageElement.className = "auth-message";
-  
-  if (["success", "error", "info"].includes(type)) {
-  messageElement.classList.add(type);
-  }
-  }
+const isSignedIn = Boolean(session?.user);
 
-/**
+if (authSection) {
+    authSection.hidden = isSignedIn;
+}
 
-* Sign in an existing user.
-  */
-  async function signInUser(email, password) {
-  if (!taskflixSupabase) {
-  showAuthMessage(
-  "Authentication is not configured yet. Please try again later.",
-  "error"
-  );
-  return false;
-  }
-  
-  try {
-  const { data, error } =
-  await taskflixSupabase.auth.signInWithPassword({
-  email,
-  password
-  });
-  
-   if (error) {
-     showAuthMessage(
-         "Sign-in failed. Check your details and try again.",
-         "error"
-     );
-     return false;
- }
+if (taskSection) {
+    taskSection.hidden = !isSignedIn;
+}
 
- showAuthMessage("Sign-in successful.", "success");
+window.dispatchEvent(
+    new CustomEvent("taskflix:auth-state", {
+        detail: {
+            user: session?.user ?? null,
+            session: session ?? null
+        }
+    })
+);
 
- window.dispatchEvent(
-     new CustomEvent("taskflix:auth-success", {
-         detail: { user: data.user }
-     })
- );
+}
 
- return true;
-  
-  } catch (error) {
-  showAuthMessage(
-  "A connection error occurred. Please try again.",
-  "error"
-  );
-  return false;
-  }
-  }
+async function signInUser(email, password) {
+if (!taskflixAuthClient) {
+throw new Error(
+"Supabase is not configured. Please check js/supabase.js."
+);
+}
 
-/**
+const { data, error } = await taskflixAuthClient.auth.signInWithPassword({
+    email,
+    password
+});
 
-* Create a new user account.
-  */
-  async function signUpUser(email, password) {
-  if (!taskflixSupabase) {
-  showAuthMessage(
-  "Authentication is not configured yet. Please try again later.",
-  "error"
-  );
-  return false;
-  }
-  
-  try {
-  const { data, error } = await taskflixSupabase.auth.signUp({
-  email,
-  password
-  });
-  
-   if (error) {
-     showAuthMessage(
-         "Account creation failed. Check your details and try again.",
-         "error"
-     );
-     return false;
- }
+if (error) {
+    throw error;
+}
 
- if (data.session) {
-     showAuthMessage(
-         "Your account has been created successfully.",
-         "success"
-     );
+return data;
 
-     window.dispatchEvent(
-         new CustomEvent("taskflix:auth-success", {
-             detail: { user: data.user }
-         })
-     );
- } else {
-     showAuthMessage(
-         "Account created. Check your email to confirm your account.",
-         "success"
-     );
- }
+}
 
- return true;
-  
-  } catch (error) {
-  showAuthMessage(
-  "A connection error occurred. Please try again.",
-  "error"
-  );
-  return false;
-  }
-  }
+async function signUpUser(email, password) {
+if (!taskflixAuthClient) {
+throw new Error(
+"Supabase is not configured. Please check js/supabase.js."
+);
+}
 
-/**
+const { data, error } = await taskflixAuthClient.auth.signUp({
+    email,
+    password
+});
 
-* Sign out the current user.
-  */
-  async function signOutUser() {
-  if (!taskflixSupabase) {
-  showAuthMessage(
-  "Authentication is not configured yet.",
-  "error"
-  );
-  return false;
-  }
-  
-  try {
-  const { error } = await taskflixSupabase.auth.signOut();
-  
-   if (error) {
-     showAuthMessage(
-         "Sign-out failed. Please try again.",
-         "error"
-     );
-     return false;
- }
+if (error) {
+    throw error;
+}
 
- window.dispatchEvent(
-     new CustomEvent("taskflix:auth-signed-out")
- );
+return data;
 
- return true;
-  
-  } catch (error) {
-  showAuthMessage(
-  "A connection error occurred. Please try again.",
-  "error"
-  );
-  return false;
-  }
-  }
+}
 
-/**
+async function signOutUser() {
+if (!taskflixAuthClient) {
+throw new Error("Supabase is not connected.");
+}
 
-* Connect authentication forms and buttons.
-  */
-  document.addEventListener("DOMContentLoaded", () => {
-  const authForm = document.getElementById("auth-form");
-  const signupButton = document.getElementById("signup-button");
-  const logoutButton = document.getElementById("logout-button");
-  
-  initializeSupabaseAuth();
-  
-  if (authForm) {
-  authForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  
-       const email = document
-         .getElementById("email")
-         ?.value.trim();
+const { error } = await taskflixAuthClient.auth.signOut();
 
-     const password = document.getElementById("password")?.value;
+if (error) {
+    throw error;
+}
 
-     if (!email || !password) {
-         showAuthMessage(
-             "Enter your email address and password.",
-             "error"
-         );
-         return;
-     }
+}
 
-     const loginButton = document.getElementById("login-button");
+document.addEventListener("DOMContentLoaded", async () => {
+const loginButton = document.getElementById("login-button");
+const signupButton = document.getElementById("signup-button");
+const logoutButton = document.getElementById("logout-button");
+const authForm = document.getElementById("auth-form");
 
-     if (loginButton) {
-         loginButton.disabled = true;
-     }
+// Use the shared Supabase configuration.
+taskflixAuthClient = initializeTaskflixSupabase();
 
-     await signInUser(email, password);
+if (!taskflixAuthClient) {
+    showAuthMessage(
+        "Cloud connection is not ready. Check your Supabase configuration.",
+        "error"
+    );
 
-     if (loginButton) {
-         loginButton.disabled = false;
-     }
- });
-  
-  }
-  
-  if (signupButton) {
-  signupButton.addEventListener("click", async () => {
-  const email = document
-  .getElementById("email")
-  ?.value.trim();
-  
-       const password = document.getElementById("password")?.value;
+    return;
+}
 
-     if (!email || !password) {
-         showAuthMessage(
-             "Enter your email address and password first.",
-             "error"
-         );
-         return;
-     }
+if (authForm) {
+    authForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-     signupButton.disabled = true;
+        const email =
+            document.getElementById("email")?.value.trim() ?? "";
 
-     await signUpUser(email, password);
+        const password =
+            document.getElementById("password")?.value ?? "";
 
-     signupButton.disabled = false;
- });
-  
-  }
-  
-  if (logoutButton) {
-  logoutButton.addEventListener("click", async () => {
-  logoutButton.disabled = true;
-  
-       const success = await signOutUser();
+        if (loginButton) loginButton.disabled = true;
+        if (signupButton) signupButton.disabled = true;
 
-     if (!success) {
-         logoutButton.disabled = false;
-     }
- });
-  
-  }
-  });
+        try {
+            await signInUser(email, password);
+
+            showAuthMessage("Signed in successfully.", "success");
+        } catch (error) {
+            showAuthMessage(
+                error.message || "Unable to sign in.",
+                "error"
+            );
+        } finally {
+            if (loginButton) loginButton.disabled = false;
+            if (signupButton) signupButton.disabled = false;
+        }
+    });
+}
+
+if (signupButton) {
+    signupButton.addEventListener("click", async () => {
+        const email =
+            document.getElementById("email")?.value.trim() ?? "";
+
+        const password =
+            document.getElementById("password")?.value ?? "";
+
+        if (!email || !password) {
+            showAuthMessage(
+                "Enter your email and password before creating an account.",
+                "warning"
+            );
+            return;
+        }
+
+        if (password.length < 8) {
+            showAuthMessage(
+                "Your password must contain at least 8 characters.",
+                "warning"
+            );
+            return;
+        }
+
+        signupButton.disabled = true;
+
+        try {
+            const result = await signUpUser(email, password);
+
+            if (result.session) {
+                showAuthMessage(
+                    "Account created successfully.",
+                    "success"
+                );
+            } else {
+                showAuthMessage(
+                    "Account created. Check your email to confirm your account before signing in.",
+                    "success"
+                );
+            }
+        } catch (error) {
+            showAuthMessage(
+                error.message || "Unable to create your account.",
+                "error"
+            );
+        } finally {
+            signupButton.disabled = false;
+        }
+    });
+}
+
+if (logoutButton) {
+    logoutButton.addEventListener("click", async () => {
+        logoutButton.disabled = true;
+
+        try {
+            await signOutUser();
+            showAuthMessage("You have signed out.", "success");
+        } catch (error) {
+            showAuthMessage(
+                error.message || "Unable to sign out.",
+                "error"
+            );
+        } finally {
+            logoutButton.disabled = false;
+        }
+    });
+}
+
+// React to login, logout and token refresh events.
+taskflixAuthClient.auth.onAuthStateChange((_event, session) => {
+    showTaskflixAuthState(session);
+});
+
+// Restore an existing session on page load.
+try {
+    const { data, error } =
+        await taskflixAuthClient.auth.getSession();
+
+    if (error) throw error;
+
+    showTaskflixAuthState(data.session);
+} catch (error) {
+    showAuthMessage(
+        "Unable to check your sign-in status. Please refresh the page.",
+        "error"
+    );
+}
+
+});
