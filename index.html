@@ -1,25 +1,42 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta
+    name="description"
+    content="TASKFLIX — A modern and secure task management application."
+>
 
-    <meta
-        name="description"
-        content="TASKFLIX — A modern and secure task management application."
-    >
+<meta name="theme-color" content="#0b0d12">
 
-    <meta name="theme-color" content="#0b0d12">
+<title>TASKFLIX | Task Manager</title>
 
-    <title>TASKFLIX | Task Manager</title>
+<!-- Web App Manifest -->
+<link rel="manifest" href="manifest.json">
 
-    <link rel="stylesheet" href="style.css">
+<!-- TASKFLIX Stylesheets -->
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/tasks.css">
+<link rel="stylesheet" href="css/settings.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="app.js" defer></script>
-    <link rel="stylesheet" href="css/style.css">
-<link rel="manifest" href="js/manifest.json">
+<!-- Supabase Library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Excel Library -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- TASKFLIX JavaScript Modules -->
+<script src="js/supabase.js" defer></script>
+<script src="js/app.js" defer></script>
+<script src="js/auth.js" defer></script>
+<script src="js/dashboard.js" defer></script>
+<script src="js/tasks.js" defer></script>
+<script src="js/settings.js" defer></script>
+<script src="js/excel.js" defer></script>
+<script src="js/notifications.js" defer></script>
+<script src="js/cloud-tasks.js" defer></script>
+<script src="js/service-worker-registration.js" defer></script>
+
 </head>
 
 <body>
