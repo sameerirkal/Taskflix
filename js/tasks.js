@@ -10,32 +10,39 @@ let editingTaskId = null;
 let taskflixTasksLoading = false;
 
 function validateTaskInput(task) {
-if (!task.description || !task.description.trim()) {
-return "Please enter a task description.";
+const description = String(task.description ?? "").trim();
+
+if (!description) {
+    return "Please enter a task description.";
 }
 
-if (task.description.trim().length > 500) {
+if (description.length > 500) {
     return "Description cannot exceed 500 characters.";
 }
 
+const startDate = String(task.start_date ?? "").trim();
+const startTime = String(task.start_time ?? "").trim();
+const endDate = String(task.end_date ?? "").trim();
+const endTime = String(task.end_time ?? "").trim();
+
+if (!startDate || !startTime || !endDate || !endTime) {
+    return "Please select all start and end date/time fields.";
+}
+
+// HTML date inputs return YYYY-MM-DD.
+// HTML time inputs normally return HH:MM.
+const start = new Date(`${startDate}T${startTime}`);
+const end = new Date(`${endDate}T${endTime}`);
+
 if (
-    !task.start_date ||
-    !task.start_time ||
-    !task.end_date ||
-    !task.end_time
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime())
 ) {
-    return "Please enter the start and end date and time.";
+    return "Please select valid dates and times.";
 }
 
-const start = new Date(`${task.start_date}T${task.start_time}`);
-const end = new Date(`${task.end_date}T${task.end_time}`);
-
-if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return "Please enter valid dates and times.";
-}
-
-if (end <= start) {
-    return "The end date and time must be after the start date and time.";
+if (end.getTime() <= start.getTime()) {
+    return "End date and time must be after the start date and time.";
 }
 
 return null;
