@@ -14,8 +14,8 @@ Cloud database connection foundation
 * in frontend JavaScript.
   */
 
-const TASKFLIX_SUPABASE_URL = "";
-const TASKFLIX_SUPABASE_PUBLISHABLE_KEY = "";
+const TASKFLIX_SUPABASE_URL = "https://ntkomgfftpgpvevstvlp.supabase.co";
+const TASKFLIX_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_anB8vrOXhuDnKqhWtIO32w_cdBO4KxI";
 
 let taskflixSupabaseClient = null;
 
