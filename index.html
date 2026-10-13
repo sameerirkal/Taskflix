@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TASKFLIX - Simple and secure task management.">
+
+    <meta
+        name="description"
+        content="TASKFLIX — A modern and secure task management application."
+    >
+
+    <meta name="theme-color" content="#0b0d12">
+
     <title>TASKFLIX | Task Manager</title>
 
     <link rel="stylesheet" href="style.css">
@@ -11,10 +18,23 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js" defer></script>
 </head>
+
 <body>
     <header class="app-header">
-        <h1>TASKFLIX</h1>
-        <p>Your tasks, organized.</p>
+        <div class="brand">
+            <h1>TASKFLIX</h1>
+            <p>Your tasks, organized.</p>
+        </div>
+
+        <div class="theme-control">
+            <label for="theme-select">Appearance</label>
+
+            <select id="theme-select" aria-label="Choose appearance">
+                <option value="dark" selected>Dark</option>
+                <option value="light">Light</option>
+                <option value="system">System</option>
+            </select>
+        </div>
     </header>
 
     <main class="container">
@@ -38,13 +58,18 @@
                     id="password"
                     name="password"
                     autocomplete="current-password"
-                    required
                     minlength="8"
+                    required
                 >
 
                 <div class="button-group">
-                    <button type="submit" id="login-button">Sign In</button>
-                    <button type="button" id="signup-button">Create Account</button>
+                    <button type="submit" id="login-button">
+                        Sign In
+                    </button>
+
+                    <button type="button" id="signup-button">
+                        Create Account
+                    </button>
                 </div>
             </form>
 
@@ -54,7 +79,10 @@
         <section id="task-section" class="card" hidden>
             <div class="section-heading">
                 <h2>My Tasks</h2>
-                <button type="button" id="logout-button">Sign Out</button>
+
+                <button type="button" id="logout-button">
+                    Sign Out
+                </button>
             </div>
 
             <form id="task-form">
@@ -68,24 +96,47 @@
                 >
 
                 <label for="start-date">Start Date</label>
-                <input type="date" id="start-date" name="startDate" required>
+                <input
+                    type="date"
+                    id="start-date"
+                    name="startDate"
+                    required
+                >
 
                 <label for="start-time">Start Time</label>
-                <input type="time" id="start-time" name="startTime" required>
+                <input
+                    type="time"
+                    id="start-time"
+                    name="startTime"
+                    required
+                >
 
                 <label for="end-date">End Date</label>
-                <input type="date" id="end-date" name="endDate" required>
+                <input
+                    type="date"
+                    id="end-date"
+                    name="endDate"
+                    required
+                >
 
                 <label for="end-time">End Time</label>
-                <input type="time" id="end-time" name="endTime" required>
+                <input
+                    type="time"
+                    id="end-time"
+                    name="endTime"
+                    required
+                >
 
-                <button type="submit" id="save-task-button">Save Task</button>
+                <button type="submit" id="save-task-button">
+                    Save Task
+                </button>
             </form>
 
             <p id="task-message" role="status" aria-live="polite"></p>
 
             <section aria-labelledby="task-list-heading">
                 <h3 id="task-list-heading">Task List</h3>
+
                 <div id="task-list">
                     <p>Your tasks will appear here.</p>
                 </div>
