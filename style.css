@@ -413,3 +413,152 @@ form {
         animation-duration: 0.01ms !important;
     }
 }
+
+/* ==========================================
+   TASKFLIX — Premium Header Enhancements
+   ========================================== */
+
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    min-height: 76px;
+    padding: 14px 5%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.brand {
+    min-width: 0;
+}
+
+.app-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.3;
+}
+
+.app-header p {
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Theme selector container */
+
+.theme-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.theme-control label {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Modern dropdown */
+
+#theme-select {
+    width: auto;
+    min-width: 120px;
+    min-height: 40px;
+    margin: 0;
+    padding: 8px 34px 8px 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background-color: var(--surface-hover);
+    color: var(--text);
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+#theme-select:hover {
+    border-color: var(--accent);
+}
+
+#theme-select option {
+    background: var(--surface);
+    color: var(--text);
+}
+
+/* Subtle modern card interaction */
+
+.card {
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.card:hover {
+    border-color: var(--border);
+}
+
+/* Improved form appearance */
+
+input,
+select {
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+input:hover {
+    border-color: var(--text-secondary);
+}
+
+/* Mobile header */
+
+@media (max-width: 600px) {
+    .app-header {
+        min-height: 68px;
+        padding: 12px 16px;
+        gap: 12px;
+    }
+
+    .app-header h1 {
+        font-size: 18px;
+    }
+
+    .app-header p {
+        font-size: 11px;
+    }
+
+    .theme-control {
+        gap: 6px;
+    }
+
+    .theme-control label {
+        display: none;
+    }
+
+    #theme-select {
+        min-width: 105px;
+        min-height: 38px;
+        padding: 7px 8px;
+        font-size: 12px;
+    }
+}
+
+
