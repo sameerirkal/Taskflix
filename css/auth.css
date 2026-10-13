@@ -1,1 +1,139 @@
+/* ==========================================
+TASKFLIX — AUTHENTICATION PAGE STYLES
+Login and account creation
+========================================== */
 
+.auth-page {
+display: flex;
+flex-direction: column;
+min-height: 100vh;
+}
+
+.auth-main {
+display: flex;
+flex: 1;
+align-items: center;
+justify-content: center;
+padding: 40px 16px;
+}
+
+.auth-card {
+width: 100%;
+max-width: 440px;
+padding: 32px;
+
+border: 1px solid var(--border-color);
+border-radius: var(--radius-large);
+
+background: var(--bg-secondary);
+box-shadow: var(--shadow-card);
+
+}
+
+.auth-heading {
+margin-bottom: 26px;
+text-align: center;
+}
+
+.auth-heading h2 {
+margin-bottom: 8px;
+font-size: 28px;
+font-weight: 750;
+letter-spacing: -0.5px;
+}
+
+.auth-heading p {
+margin-bottom: 0;
+font-size: 14px;
+}
+
+.auth-form {
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+.auth-form label {
+margin-top: 8px;
+}
+
+.auth-form input {
+margin-bottom: 4px;
+}
+
+.auth-actions {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 12px;
+margin-top: 18px;
+}
+
+.auth-actions button {
+width: 100%;
+}
+
+.auth-actions .secondary-action {
+border-color: var(--border-color);
+background: var(--bg-tertiary);
+color: var(--text-primary);
+}
+
+.auth-actions .secondary-action:hover {
+background: var(--bg-primary);
+}
+
+.auth-message {
+min-height: 24px;
+margin: 18px 0 0;
+font-size: 13px;
+text-align: center;
+overflow-wrap: anywhere;
+}
+
+.auth-message:empty {
+display: none;
+}
+
+.auth-message.success {
+color: var(--success);
+}
+
+.auth-message.error {
+color: var(--danger);
+}
+
+.auth-message.info {
+color: var(--text-secondary);
+}
+
+.auth-terms {
+margin: 20px 0 0;
+font-size: 12px;
+line-height: 1.6;
+text-align: center;
+}
+
+.auth-terms a {
+text-decoration: underline;
+text-underline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+.auth-main {
+padding: 24px 12px;
+}
+
+.auth-card {
+    padding: 24px 18px;
+    border-radius: var(--radius-medium);
+}
+
+.auth-heading h2 {
+    font-size: 24px;
+}
+
+.auth-actions {
+    grid-template-columns: 1fr;
+}
+
+}
