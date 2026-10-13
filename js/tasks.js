@@ -2,14 +2,15 @@
 
 /* ==========================================
 TASKFLIX — CLOUD TASK MANAGEMENT
-Add, edit, complete, load and delete tasks
+Reliable loading, rendering and task actions
 ========================================== */
 
 let taskflixTasks = [];
 let editingTaskId = null;
 let taskflixTasksLoading = false;
+let taskflixLoadRequestId = 0;
+let taskflixCurrentUserId = null;
 
-/* Keep tasks accessible to dashboard and Excel modules. */
 function syncTaskflixTasksGlobal() {
 window.taskflixTasks = taskflixTasks;
 }
@@ -77,7 +78,11 @@ if (["success", "warning", "error"].includes(type)) {
 }
 
 function formatTaskDateTime(dateValue, timeValue) {
-const date = new Date("${dateValue}T${timeValue}");
+if (!dateValue || !timeValue) {
+return "Date/time not available";
+}
+
+const date = new Date(`${dateValue}T${timeValue}`);
 
 if (Number.isNaN(date.getTime())) {
     return "Invalid date";
@@ -124,7 +129,7 @@ main.className = "task-item-main";
 
 const title = document.createElement("h4");
 title.className = "task-item-title";
-title.textContent = task.description;
+title.textContent = task.description || "Untitled task";
 
 const meta = document.createElement("div");
 meta.className = "task-item-meta";
@@ -203,6 +208,8 @@ list.replaceChildren();
 
 if (taskflixTasksLoading) {
     const loading = document.createElement("p");
+    loading.className = "task-loading-state";
+    loading.setAttribute("role", "status");
     loading.textContent = "Loading your tasks...";
     list.appendChild(loading);
     return;
@@ -232,11 +239,18 @@ LOAD TASKS FROM CLOUD
 ========================================== */
 
 async function loadCloudTasks() {
+const requestId = ++taskflixLoadRequestId;
+
 taskflixTasksLoading = true;
 renderTaskList();
 
 try {
     const tasks = await loadTaskflixCloudTasks();
+
+    // Ignore an older request if a newer load has started.
+    if (requestId !== taskflixLoadRequestId) {
+        return false;
+    }
 
     taskflixTasks = tasks.map((task) => ({
         ...task,
@@ -249,6 +263,11 @@ try {
 
     return true;
 } catch (error) {
+    if (requestId !== taskflixLoadRequestId) {
+        return false;
+    }
+
+    // Do not show a false empty state when cloud loading fails.
     taskflixTasks = [];
     syncTaskflixTasksGlobal();
 
@@ -259,8 +278,10 @@ try {
 
     return false;
 } finally {
-    taskflixTasksLoading = false;
-    renderTaskList();
+    if (requestId === taskflixLoadRequestId) {
+        taskflixTasksLoading = false;
+        renderTaskList();
+    }
 }
 
 }
@@ -278,7 +299,6 @@ const previousValue = task.completed;
 const newValue = !previousValue;
 
 task.completed = newValue;
-
 syncTaskflixTasksGlobal();
 renderTaskList();
 
@@ -295,7 +315,6 @@ try {
     notifyTasksUpdated();
 } catch (error) {
     task.completed = previousValue;
-
     syncTaskflixTasksGlobal();
     renderTaskList();
 
@@ -318,9 +337,11 @@ if (!task) return;
 
 document.getElementById("task-description").value = task.description;
 document.getElementById("start-date").value = task.start_date;
-document.getElementById("start-time").value = task.start_time;
+document.getElementById("start-time").value =
+    String(task.start_time).slice(0, 5);
 document.getElementById("end-date").value = task.end_date;
-document.getElementById("end-time").value = task.end_time;
+document.getElementById("end-time").value =
+    String(task.end_time).slice(0, 5);
 
 editingTaskId = taskId;
 
@@ -469,7 +490,38 @@ try {
 }
 
 /* ==========================================
-INITIALIZATION AND AUTH STATE
+HANDLE AUTH STATE
+========================================== */
+
+function handleTaskflixAuthState(event) {
+const user = event.detail?.user ?? null;
+const nextUserId = user?.id ?? null;
+
+if (!nextUserId) {
+    // Invalidate any request started for a previous session.
+    taskflixLoadRequestId++;
+    taskflixCurrentUserId = null;
+    taskflixTasks = [];
+    taskflixTasksLoading = false;
+
+    syncTaskflixTasksGlobal();
+    resetTaskForm();
+    renderTaskList();
+    return;
+}
+
+// Avoid reloading the same user's tasks for repeated token events.
+if (taskflixCurrentUserId === nextUserId && taskflixTasksLoading) {
+    return;
+}
+
+taskflixCurrentUserId = nextUserId;
+loadCloudTasks();
+
+}
+
+/* ==========================================
+INITIALIZATION
 ========================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -496,19 +548,38 @@ if (form) {
     });
 }
 
-window.addEventListener("taskflix:auth-state", (event) => {
-    if (event.detail?.user) {
-        loadCloudTasks();
-    } else {
-        taskflixTasks = [];
-        syncTaskflixTasksGlobal();
-
-        taskflixTasksLoading = false;
-        resetTaskForm();
-        renderTaskList();
-    }
-});
+window.addEventListener(
+    "taskflix:auth-state",
+    handleTaskflixAuthState
+);
 
 renderTaskList();
+
+// Independently check the restored session, so task loading does not
+// rely only on receiving an auth-state event at the right time.
+(async () => {
+    try {
+        const client = getTaskflixSupabaseClient();
+
+        if (!client) return;
+
+        const { data, error } = await client.auth.getSession();
+
+        if (error) throw error;
+
+        const user = data.session?.user ?? null;
+
+        if (user) {
+            handleTaskflixAuthState({
+                detail: { user, session: data.session }
+            });
+        }
+    } catch (error) {
+        showTaskMessage(
+            error.message || "Could not restore your task session.",
+            "error"
+        );
+    }
+})();
 
 });
