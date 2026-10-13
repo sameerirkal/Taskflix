@@ -1,0 +1,11 @@
+{
+"name": "TASKFLIX - Task Manager",
+"short_name": "TASKFLIX",
+"description": "A modern and secure task management application.",
+"start_url": "./index.html",
+"scope": "./",
+"display": "standalone",
+"background_color": "#0b0d12",
+"theme_color": "#0b0d12",
+"orientation": "any"
+}
