@@ -348,3 +348,105 @@ const today = [
 XLSX.writeFile(workbook, `TASKFLIX_EOD_${today}.xlsx`);
 
 }
+
+
+/* ==========================================
+TASKFLIX — EXCEL UI EVENT HANDLERS
+========================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+const importForm = document.getElementById("excel-import-form");
+const fileInput = document.getElementById("excel-file");
+const importButton = document.getElementById("excel-import-button");
+const importMessage = document.getElementById("excel-import-message");
+const importErrors = document.getElementById("excel-import-errors");
+
+const exportButton = document.getElementById("excel-export-button");
+const exportMessage = document.getElementById("excel-export-message");
+
+if (importForm) {
+    importForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        importMessage.textContent = "";
+        importErrors.textContent = "";
+        importErrors.hidden = true;
+
+        const file = fileInput?.files?.[0];
+
+        if (!file) {
+            importMessage.textContent = "Please select an Excel file first.";
+            return;
+        }
+
+        importButton.disabled = true;
+        importButton.textContent = "Importing...";
+
+        try {
+            const result = await parseTaskExcelFile(file);
+
+            if (result.tasks.length === 0) {
+                importMessage.textContent =
+                    "No valid tasks were found. Check the Excel file and row errors below.";
+            } else {
+                const importResult = await importTasksToCloud(result.tasks);
+
+                importMessage.textContent =
+                    `Successfully imported ${importResult.imported.length} of ${result.tasks.length} valid tasks.`;
+
+                result.errors.push(...importResult.errors);
+            }
+
+            if (result.errors.length > 0) {
+                importErrors.textContent = result.errors.join("\n");
+                importErrors.hidden = false;
+            }
+
+            if (typeof loadCloudTasks === "function") {
+                await loadCloudTasks();
+            }
+
+            fileInput.value = "";
+        } catch (error) {
+            importMessage.textContent =
+                error.message || "An unexpected error occurred during import.";
+        } finally {
+            importButton.disabled = false;
+            importButton.textContent = "Import Tasks";
+        }
+    });
+}
+
+if (exportButton) {
+    exportButton.addEventListener("click", async () => {
+        exportMessage.textContent = "";
+
+        exportButton.disabled = true;
+        exportButton.textContent = "Preparing report...";
+
+        try {
+            if (typeof loadCloudTasks === "function") {
+                await loadCloudTasks();
+            }
+
+            if (!Array.isArray(window.taskflixTasks)) {
+                throw new Error(
+                    "Tasks are not available yet. Please sign in and try again."
+                );
+            }
+
+            exportEODTasksToExcel(window.taskflixTasks);
+
+            exportMessage.textContent =
+                "Your EOD report has been downloaded successfully.";
+        } catch (error) {
+            exportMessage.textContent =
+                error.message || "Unable to export the EOD report.";
+        } finally {
+            exportButton.disabled = false;
+            exportButton.textContent = "Download EOD Report";
+        }
+    });
+}
+
+});
