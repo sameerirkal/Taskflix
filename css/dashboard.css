@@ -1,1 +1,291 @@
+/* ==========================================
+TASKFLIX — DASHBOARD STYLES
+Overview, statistics and daily progress
+========================================== */
 
+.dashboard-page {
+min-height: 100vh;
+}
+
+.dashboard-main {
+width: min(100% - 32px, 1120px);
+margin-inline: auto;
+padding-block: 32px 48px;
+}
+
+.dashboard-heading {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 20px;
+margin-bottom: 28px;
+}
+
+.dashboard-heading h2 {
+margin-bottom: 6px;
+font-size: clamp(24px, 4vw, 32px);
+font-weight: 750;
+letter-spacing: -0.6px;
+}
+
+.dashboard-heading p {
+margin-bottom: 0;
+font-size: 14px;
+}
+
+.dashboard-actions {
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+gap: 10px;
+}
+
+/* Summary cards */
+
+.dashboard-stats {
+display: grid;
+grid-template-columns: repeat(4, minmax(0, 1fr));
+gap: 18px;
+margin-bottom: 30px;
+}
+
+.stat-card {
+min-width: 0;
+padding: 22px;
+
+border: 1px solid var(--border-color);
+border-radius: var(--radius-medium);
+
+background: var(--bg-secondary);
+box-shadow: var(--shadow-card);
+
+transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast);
+
+}
+
+.stat-card:hover {
+transform: translateY(-2px);
+border-color: var(--accent);
+}
+
+.stat-label {
+display: block;
+margin-bottom: 12px;
+
+color: var(--text-secondary);
+font-size: 13px;
+font-weight: 600;
+
+}
+
+.stat-value {
+display: block;
+color: var(--text-primary);
+font-size: clamp(26px, 3vw, 34px);
+font-weight: 800;
+line-height: 1.2;
+overflow-wrap: anywhere;
+}
+
+.stat-description {
+margin: 10px 0 0;
+font-size: 12px;
+}
+
+/* Dashboard sections */
+
+.dashboard-section {
+margin-top: 28px;
+padding: 24px;
+
+border: 1px solid var(--border-color);
+border-radius: var(--radius-large);
+
+background: var(--bg-secondary);
+box-shadow: var(--shadow-card);
+
+}
+
+.dashboard-section-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 16px;
+margin-bottom: 20px;
+}
+
+.dashboard-section-header h3 {
+margin-bottom: 0;
+font-size: 19px;
+font-weight: 700;
+}
+
+.dashboard-section-header p {
+margin: 6px 0 0;
+font-size: 13px;
+}
+
+/* Progress indicator */
+
+.progress-track {
+width: 100%;
+height: 10px;
+overflow: hidden;
+
+border-radius: 999px;
+background: var(--bg-tertiary);
+
+}
+
+.progress-fill {
+width: 0;
+height: 100%;
+
+border-radius: inherit;
+background: var(--accent);
+
+transition: width 300ms ease;
+
+}
+
+.progress-summary {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+margin-top: 12px;
+
+color: var(--text-secondary);
+font-size: 13px;
+
+}
+
+/* Upcoming tasks */
+
+.upcoming-task-list {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.upcoming-task-item {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+gap: 16px;
+padding: 16px;
+
+border: 1px solid var(--border-color);
+border-radius: var(--radius-medium);
+
+background: var(--bg-primary);
+
+}
+
+.upcoming-task-details {
+min-width: 0;
+}
+
+.upcoming-task-title {
+margin: 0 0 6px;
+color: var(--text-primary);
+font-size: 14px;
+font-weight: 650;
+overflow-wrap: anywhere;
+}
+
+.upcoming-task-time {
+margin: 0;
+color: var(--text-secondary);
+font-size: 12px;
+}
+
+.upcoming-task-status {
+flex-shrink: 0;
+padding: 4px 9px;
+
+border: 1px solid var(--border-color);
+border-radius: 999px;
+
+color: var(--text-secondary);
+font-size: 11px;
+font-weight: 650;
+
+}
+
+/* Empty state */
+
+.dashboard-empty {
+padding: 32px 16px;
+text-align: center;
+}
+
+.dashboard-empty h4 {
+margin-bottom: 8px;
+font-size: 17px;
+}
+
+.dashboard-empty p {
+margin-bottom: 18px;
+font-size: 13px;
+}
+
+/* Responsive layouts */
+
+@media (max-width: 900px) {
+.dashboard-stats {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+}
+
+@media (max-width: 600px) {
+.dashboard-main {
+width: min(100% - 24px, 1120px);
+padding-block: 24px 36px;
+}
+
+.dashboard-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dashboard-actions {
+    width: 100%;
+}
+
+.dashboard-section {
+    padding: 18px;
+    border-radius: var(--radius-medium);
+}
+
+.dashboard-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.stat-card {
+    padding: 16px;
+}
+
+.upcoming-task-item {
+    flex-direction: column;
+    gap: 10px;
+}
+
+}
+
+@media (max-width: 360px) {
+.dashboard-stats {
+grid-template-columns: 1fr;
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+.stat-card,
+.progress-fill {
+transition: none;
+}
+}
