@@ -1,1 +1,196 @@
+"use strict";
 
+/* ==========================================
+TASKFLIX — SETTINGS MODULE
+Theme, notification and account preferences
+========================================== */
+
+/*
+
+* This module handles settings UI interactions.
+* Cloud persistence and push notifications will
+* be integrated in later steps.
+  */
+
+function getSettingsElement(id) {
+return document.getElementById(id);
+}
+
+/**
+
+* Show a status message if the relevant element exists.
+  */
+  function showSettingsMessage(message, type = "info") {
+  const messageElement = getSettingsElement("settings-message");
+  
+  if (!messageElement) {
+  return;
+  }
+  
+  messageElement.textContent = message;
+  messageElement.className = "status-message";
+  
+  if (["success", "warning", "error"].includes(type)) {
+  messageElement.classList.add("status-${type}");
+  }
+  }
+
+/**
+
+* Update the notification preference controls.
+
+* 
+
+* These controls are optional until the settings
+
+* interface is connected to the page.
+  */
+  function initializeNotificationSettings() {
+  const notificationToggle = getSettingsElement("notification-toggle");
+  const notificationStatus = getSettingsElement("notification-status");
+  
+  if (!notificationToggle) {
+  return;
+  }
+  
+  if (!("Notification" in window)) {
+  notificationToggle.disabled = true;
+  
+   if (notificationStatus) {
+     notificationStatus.textContent =
+         "Browser notifications are not supported in this browser.";
+ }
+
+ return;
+  
+  }
+  
+  if (Notification.permission === "granted") {
+  if (notificationStatus) {
+  notificationStatus.textContent =
+  "Browser notification permission is enabled.";
+  }
+  } else if (Notification.permission === "denied") {
+  notificationToggle.disabled = true;
+  
+   if (notificationStatus) {
+     notificationStatus.textContent =
+         "Notifications are blocked in browser settings.";
+ }
+  
+  } else if (notificationStatus) {
+  notificationStatus.textContent =
+  "Notifications have not been enabled yet.";
+  }
+  
+  notificationToggle.addEventListener("change", async () => {
+  if (notificationToggle.checked !== true) {
+  showSettingsMessage(
+  "Notification preference updated. Cloud notification settings will be connected later.",
+  "success"
+  );
+  return;
+  }
+  
+   if (!("Notification" in window)) {
+     notificationToggle.checked = false;
+     showSettingsMessage(
+         "This browser does not support notifications.",
+         "error"
+     );
+     return;
+ }
+
+ if (Notification.permission === "granted") {
+     showSettingsMessage(
+         "Browser notification permission is already enabled.",
+         "success"
+     );
+     return;
+ }
+
+ if (Notification.permission === "denied") {
+     notificationToggle.checked = false;
+     showSettingsMessage(
+         "Please allow notifications in your browser settings.",
+         "warning"
+     );
+     return;
+ }
+
+ try {
+     const permission = await Notification.requestPermission();
+
+     if (permission === "granted") {
+         showSettingsMessage(
+             "Notification permission granted. Push notification setup will be completed later.",
+             "success"
+         );
+
+         if (notificationStatus) {
+             notificationStatus.textContent =
+                 "Browser notification permission is enabled.";
+         }
+     } else {
+         notificationToggle.checked = false;
+
+         showSettingsMessage(
+             "Notification permission was not granted.",
+             "warning"
+         );
+
+         if (notificationStatus) {
+             notificationStatus.textContent =
+                 "Notifications are not enabled.";
+         }
+     }
+ } catch (error) {
+     notificationToggle.checked = false;
+
+     showSettingsMessage(
+         "Unable to request notification permission in this browser.",
+         "error"
+     );
+ }
+  
+  });
+  }
+
+/**
+
+* Initialize theme controls when they are available.
+
+* The shared theme logic remains in js/app.js.
+  */
+  function initializeSettingsThemeControl() {
+  const themeToggle = getSettingsElement("theme-toggle");
+  const themeLabel = getSettingsElement("theme-label");
+  
+  if (!themeToggle) {
+  return;
+  }
+  
+  const updateThemeLabel = () => {
+  if (!themeLabel) {
+  return;
+  }
+  
+   themeLabel.textContent = themeToggle.checked
+     ? "Light Mode"
+     : "Dark Mode";
+  
+  };
+  
+  updateThemeLabel();
+  
+  themeToggle.addEventListener("change", updateThemeLabel);
+  }
+
+/**
+
+* Set up the settings module.
+  */
+  document.addEventListener("DOMContentLoaded", () => {
+  initializeNotificationSettings();
+  initializeSettingsThemeControl();
+  });
