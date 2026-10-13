@@ -27,14 +27,28 @@
         </div>
 
         <div class="theme-control">
-            <label for="theme-select">Appearance</label>
+    <span id="theme-label">Dark Mode</span>
 
-            <select id="theme-select" aria-label="Choose appearance">
-                <option value="dark" selected>Dark</option>
-                <option value="light">Light</option>
-                <option value="system">System</option>
-            </select>
+    <label class="switch" aria-label="Toggle dark and light theme">
+        <div class="round">
+            <input
+                name="theme-toggle"
+                id="theme-toggle"
+                type="checkbox"
+                role="switch"
+                aria-label="Light theme"
+                aria-checked="false"
+            >
+
+            <div class="back">
+                <label for="theme-toggle" class="but">
+                    <span class="on">I</span>
+                    <span class="off">0</span>
+                </label>
+            </div>
         </div>
+    </label>
+</div>
     </header>
 
     <main class="container">
