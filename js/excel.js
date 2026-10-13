@@ -2,7 +2,6 @@
 
 /* ==========================================
 TASKFLIX — EXCEL IMPORT / EXPORT
-Bulk cloud import and EOD report export
 ========================================== */
 
 const TASKFLIX_EXCEL_COLUMNS = [
@@ -18,7 +17,10 @@ const TASKFLIX_EOD_COLUMNS = [
 "Task Completion Status"
 ];
 
-/* Normalize dates from Excel or HTML-compatible strings. */
+/* ==========================================
+DATE NORMALIZATION
+========================================== */
+
 function normalizeExcelDate(value) {
 if (value instanceof Date && !Number.isNaN(value.getTime())) {
 return [
@@ -28,18 +30,47 @@ String(value.getDate()).padStart(2, "0")
 ].join("-");
 }
 
+if (typeof value === "number" && Number.isFinite(value)) {
+    const parts = XLSX.SSF.parse_date_code(value);
+
+    if (!parts) return "";
+
+    return [
+        parts.y,
+        String(parts.m).padStart(2, "0"),
+        String(parts.d).padStart(2, "0")
+    ].join("-");
+}
+
 const text = String(value ?? "").trim();
 
 if (!text) return "";
 
-// Already in YYYY-MM-DD format.
 const isoMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
 
 if (isoMatch) {
-    return `${isoMatch[1]}-${isoMatch[2].padStart(2, "0")}-${isoMatch[3].padStart(2, "0")}`;
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+
+    const date = new Date(year, month - 1, day);
+
+    if (
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
+    ) {
+        return "";
+    }
+
+    return [
+        year,
+        String(month).padStart(2, "0"),
+        String(day).padStart(2, "0")
+    ].join("-");
 }
 
-// Support DD-MM-YYYY and DD/MM/YYYY.
+/* Accept DD-MM-YYYY or DD/MM/YYYY. */
 const localMatch = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
 
 if (localMatch) {
@@ -57,24 +88,46 @@ if (localMatch) {
         return "";
     }
 
-    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return [
+        year,
+        String(month).padStart(2, "0"),
+        String(day).padStart(2, "0")
+    ].join("-");
 }
 
 return "";
 
 }
 
-/* Normalize Excel time values to HH:MM. */
+/* ==========================================
+TIME NORMALIZATION
+========================================== */
+
 function normalizeExcelTime(value) {
 if (value instanceof Date && !Number.isNaN(value.getTime())) {
-return "${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}";
+return [
+String(value.getHours()).padStart(2, "0"),
+String(value.getMinutes()).padStart(2, "0")
+].join(":");
+}
+
+if (typeof value === "number" && Number.isFinite(value)) {
+    const fraction = ((value % 1) + 1) % 1;
+    const totalMinutes = Math.round(fraction * 24 * 60) % (24 * 60);
+
+    return [
+        String(Math.floor(totalMinutes / 60)).padStart(2, "0"),
+        String(totalMinutes % 60).padStart(2, "0")
+    ].join(":");
 }
 
 const text = String(value ?? "").trim();
 
 if (!text) return "";
 
-const match = text.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+const match = text.match(
+    /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i
+);
 
 if (!match) return "";
 
@@ -96,9 +149,16 @@ if (meridiem) {
     return "";
 }
 
-return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+return [
+    String(hours).padStart(2, "0"),
+    String(minutes).padStart(2, "0")
+].join(":");
 
 }
+
+/* ==========================================
+ROW VALIDATION
+========================================== */
 
 function validateExcelTaskRow(row, rowNumber) {
 const description = String(row["Description"] ?? "").trim();
@@ -116,7 +176,7 @@ if (description.length > 500) {
 }
 
 if (!startDate || !startTime || !endDate || !endTime) {
-    return `Row ${rowNumber}: One or more dates/times are invalid or missing. Use dates such as 2026-10-14 and times such as 09:30 or 02:30 PM.`;
+    return `Row ${rowNumber}: A date or time is missing or invalid. Use dates like 2026-10-14 and times like 09:30 or 02:30 PM.`;
 }
 
 const start = new Date(`${startDate}T${startTime}`);
@@ -136,6 +196,10 @@ if (end <= start) {
 return null;
 
 }
+
+/* ==========================================
+HEADER VALIDATION
+========================================== */
 
 function validateExcelHeaders(headers) {
 if (!Array.isArray(headers)) {
@@ -167,6 +231,10 @@ return {
 
 }
 
+/* ==========================================
+READ AND PARSE EXCEL FILE
+========================================== */
+
 function parseTaskExcelFile(file) {
 return new Promise((resolve, reject) => {
 if (typeof XLSX === "undefined") {
@@ -195,13 +263,14 @@ return;
             const firstSheetName = workbook.SheetNames[0];
 
             if (!firstSheetName) {
-                reject(new Error("The Excel workbook contains no worksheets."));
+                reject(
+                    new Error("The Excel workbook contains no worksheets.")
+                );
                 return;
             }
 
             const worksheet = workbook.Sheets[firstSheetName];
 
-            // Read the first row separately so headers are checked reliably.
             const matrix = XLSX.utils.sheet_to_json(worksheet, {
                 header: 1,
                 defval: "",
@@ -209,7 +278,11 @@ return;
             });
 
             if (matrix.length < 2) {
-                reject(new Error("The worksheet must contain headers and at least one task row."));
+                reject(
+                    new Error(
+                        "The worksheet must contain headers and at least one task row."
+                    )
+                );
                 return;
             }
 
@@ -231,8 +304,8 @@ return;
                 const values = matrix[index];
 
                 if (
-                    values.every((value) =>
-                        String(value ?? "").trim() === ""
+                    values.every(
+                        (value) => String(value ?? "").trim() === ""
                     )
                 ) {
                     continue;
@@ -245,7 +318,10 @@ return;
                 });
 
                 const rowNumber = index + 1;
-                const validationError = validateExcelTaskRow(row, rowNumber);
+                const validationError = validateExcelTaskRow(
+                    row,
+                    rowNumber
+                );
 
                 if (validationError) {
                     errors.push(validationError);
@@ -279,39 +355,43 @@ return;
 
 }
 
-/*
+/* ==========================================
+IMPORT VALID TASKS TO SUPABASE
+========================================== */
 
-* Import validated tasks into Supabase one at a time.
+async function importTasksToCloud(tasks) {
+if (!Array.isArray(tasks) || tasks.length === 0) {
+throw new Error("There are no valid tasks to import.");
+}
 
-* Existing RLS policies keep each user's tasks private.
-  */
-  async function importTasksToCloud(tasks) {
-  if (!Array.isArray(tasks) || tasks.length === 0) {
-  throw new Error("There are no valid tasks to import.");
-  }
-  
-  const imported = [];
-  const errors = [];
-  
-  for (let index = 0; index < tasks.length; index += 1) {
-  try {
-  const task = await createTaskflixCloudTask(tasks[index]);
-  imported.push(task);
-  } catch (error) {
-  errors.push(
-  "Task ${index + 1} (${tasks[index].description}): ${error.message}"
-  );
-  }
-  }
-  
-  // Refresh the task list after the import attempt.
-  window.dispatchEvent(new CustomEvent("taskflix:tasks-updated"));
-  
-  return {
-  imported,
-  errors
-  };
-  }
+if (typeof createTaskflixCloudTask !== "function") {
+    throw new Error("Cloud task service is not available.");
+}
+
+const imported = [];
+const errors = [];
+
+for (let index = 0; index < tasks.length; index += 1) {
+    try {
+        const task = await createTaskflixCloudTask(tasks[index]);
+        imported.push(task);
+    } catch (error) {
+        errors.push(
+            `Task ${index + 1} (${tasks[index].description}): ${error.message}`
+        );
+    }
+}
+
+return {
+    imported,
+    errors
+};
+
+}
+
+/* ==========================================
+EXPORT EOD REPORT
+========================================== */
 
 function exportEODTasksToExcel(tasks) {
 if (typeof XLSX === "undefined") {
@@ -339,19 +419,20 @@ XLSX.utils.book_append_sheet(
     "EOD Task Report"
 );
 
+const now = new Date();
+
 const today = [
-    new Date().getFullYear(),
-    String(new Date().getMonth() + 1).padStart(2, "0"),
-    String(new Date().getDate()).padStart(2, "0")
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
 ].join("-");
 
 XLSX.writeFile(workbook, `TASKFLIX_EOD_${today}.xlsx`);
 
 }
 
-
 /* ==========================================
-TASKFLIX — EXCEL UI EVENT HANDLERS
+CONNECT EXCEL UI
 ========================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -375,7 +456,8 @@ if (importForm) {
         const file = fileInput?.files?.[0];
 
         if (!file) {
-            importMessage.textContent = "Please select an Excel file first.";
+            importMessage.textContent =
+                "Please select an Excel file first.";
             return;
         }
 
@@ -384,32 +466,39 @@ if (importForm) {
 
         try {
             const result = await parseTaskExcelFile(file);
+            const allErrors = [...result.errors];
 
-            if (result.tasks.length === 0) {
-                importMessage.textContent =
-                    "No valid tasks were found. Check the Excel file and row errors below.";
-            } else {
+            if (result.tasks.length > 0) {
                 const importResult = await importTasksToCloud(result.tasks);
+
+                allErrors.push(...importResult.errors);
 
                 importMessage.textContent =
                     `Successfully imported ${importResult.imported.length} of ${result.tasks.length} valid tasks.`;
-
-                result.errors.push(...importResult.errors);
+            } else {
+                importMessage.textContent =
+                    "No valid tasks were found. Check the row errors below.";
             }
 
-            if (result.errors.length > 0) {
-                importErrors.textContent = result.errors.join("\n");
+            if (allErrors.length > 0) {
+                importErrors.textContent = allErrors.join("\n");
                 importErrors.hidden = false;
             }
 
             if (typeof loadCloudTasks === "function") {
-                await loadCloudTasks();
+                const refreshed = await loadCloudTasks();
+
+                if (!refreshed && result.tasks.length > 0) {
+                    importMessage.textContent +=
+                        " However, refreshing the cloud task list failed.";
+                }
             }
 
             fileInput.value = "";
         } catch (error) {
             importMessage.textContent =
-                error.message || "An unexpected error occurred during import.";
+                error.message ||
+                "An unexpected error occurred during import.";
         } finally {
             importButton.disabled = false;
             importButton.textContent = "Import Tasks";
@@ -425,23 +514,34 @@ if (exportButton) {
         exportButton.textContent = "Preparing report...";
 
         try {
-            if (typeof loadCloudTasks === "function") {
-                await loadCloudTasks();
+            if (typeof loadCloudTasks !== "function") {
+                throw new Error("Cloud task loader is not available.");
             }
 
-            if (!Array.isArray(window.taskflixTasks)) {
+            const refreshed = await loadCloudTasks();
+
+            if (!refreshed) {
                 throw new Error(
-                    "Tasks are not available yet. Please sign in and try again."
+                    "Could not load tasks from the cloud. Please check your connection and try again."
                 );
             }
 
-            exportEODTasksToExcel(window.taskflixTasks);
+            const tasks = window.taskflixTasks;
+
+            if (!Array.isArray(tasks) || tasks.length === 0) {
+                throw new Error(
+                    "No tasks are available to export. Please add tasks first."
+                );
+            }
+
+            exportEODTasksToExcel(tasks);
 
             exportMessage.textContent =
                 "Your EOD report has been downloaded successfully.";
         } catch (error) {
             exportMessage.textContent =
-                error.message || "Unable to export the EOD report.";
+                error.message ||
+                "Unable to export the EOD report.";
         } finally {
             exportButton.disabled = false;
             exportButton.textContent = "Download EOD Report";
