@@ -73,9 +73,15 @@ throw new Error(
 );
 }
 
+// Replace this with your actual GitHub Pages website URL.
+const redirectUrl = "https://sameerirkal.github.io/Taskflix/";
+
 const { data, error } = await taskflixAuthClient.auth.signUp({
     email,
-    password
+    password,
+    options: {
+        emailRedirectTo: redirectUrl
+    }
 });
 
 if (error) {
