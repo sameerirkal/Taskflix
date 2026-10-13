@@ -362,7 +362,7 @@ try {
         savedTask = await createTaskflixCloudTask(normalizedTask);
         taskflixTasks.push(savedTask);
 
-        showTaskMessage("Task saved to cloud storage.", "success");
+        showTaskMessage("Task saved.", "success");
     }
 
     resetTaskForm();
