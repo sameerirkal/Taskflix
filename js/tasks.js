@@ -11,6 +11,59 @@ let taskflixTasksLoading = false;
 let taskflixLoadRequestId = 0;
 let taskflixCurrentUserId = null;
 
+/* ==========================================
+OVERDUE TASK CONFIRMATION
+========================================== */
+
+let taskflixOverduePromptOpen = false;
+let taskflixOverduePromptedIds = new Set();
+
+async function checkTaskflixOverdueTasks() {
+if (taskflixOverduePromptOpen || taskflixTasksLoading) {
+return;
+}
+
+const now = new Date();
+
+const overdueTask = taskflixTasks.find((task) => {
+    if (task.completed) return false;
+    if (!task.id) return false;
+    if (taskflixOverduePromptedIds.has(task.id)) return false;
+
+    const endDateTime = createTaskLocalDate(
+        task.end_date,
+        task.end_time
+    );
+
+    return endDateTime && endDateTime.getTime() <= now.getTime();
+});
+
+if (!overdueTask) return;
+
+taskflixOverduePromptOpen = true;
+taskflixOverduePromptedIds.add(overdueTask.id);
+
+try {
+    const completed = window.confirm(
+        `Task: "${overdueTask.description}"\n\n` +
+        "Its scheduled end time has passed.\n\n" +
+        "Did you complete this task?\n\n" +
+        "Press OK for Completed, or Cancel to keep it Pending."
+    );
+
+    if (completed) {
+        await toggleTaskCompletion(overdueTask.id);
+    }
+} finally {
+    taskflixOverduePromptOpen = false;
+
+    window.setTimeout(() => {
+        checkTaskflixOverdueTasks();
+    }, 300);
+}
+
+}
+
 function syncTaskflixTasksGlobal() {
     window.taskflixTasks = taskflixTasks;
 }
